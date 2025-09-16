@@ -1,0 +1,62 @@
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.1'
+
+      - name: Go version
+        run: go version
+
+      - name: Go mod tidy (root module) must be clean
+        run: |
+          go mod tidy
+          if [ -f go.sum ]; then
+            git diff --exit-code go.mod go.sum || (echo "::error::go.mod/go.sum changed after tidy"; exit 1)
+          else
+            git diff --exit-code go.mod || (echo "::error::go.mod changed after tidy"; exit 1)
+          fi
+
+      - name: Format check (gofmt)
+        run: |
+          fmt_out=$(gofmt -l .)
+          if [ -n "$fmt_out" ]; then
+            echo "::error::gofmt found unformatted files:"
+            echo "$fmt_out"
+            exit 1
+          fi
+
+      - name: Build binaries
+        run: |
+          go build -v ./cmd/orderlyid
+          go build -v ./cmd/goldenize
+          go build -v ./tools/conformance
+
+      - name: Regenerate spec vectors (golden check)
+        run: |
+          go run ./cmd/goldenize
+          git diff --exit-code spec/test-vectors.json || (echo "::error::spec/test-vectors.json not up to date. Run 'go run ./cmd/goldenize' and commit."; exit 1)
+
+      - name: Run unit tests
+        run: go test ./... -v
+
+      - name: Run conformance tool (Go reference)
+        run: go run ./tools/conformance -v
+

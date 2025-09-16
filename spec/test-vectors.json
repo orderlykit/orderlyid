@@ -1,0 +1,60 @@
+{
+  "vectors": [
+    {
+      "desc": "zero tenant/shard, seq=0, no checksum",
+      "prefix": "order",
+      "time_ms": 1735689600000,
+      "flags": 0,
+      "tenant": 0,
+      "seq": 0,
+      "shard": 0,
+      "random_hex": "0123456789abcdef",
+      "id": "order_00jc1gmm00000000000028t5cy4tqkff"
+    },
+    {
+      "desc": "tenant=42, shard=7, seq=15, no checksum",
+      "prefix": "user",
+      "time_ms": 1735689600123,
+      "flags": 0,
+      "tenant": 42,
+      "seq": 15,
+      "shard": 7,
+      "random_hex": "deadbeefcafefeed",
+      "id": "user_00jc1gmmfc000ag0y007xbdyxz5fxzqd"
+    },
+    {
+      "desc": "tenant=1, shard=65535 (max), seq wrap=0, checksum enabled",
+      "prefix": "shipment",
+      "time_ms": 1735689600999,
+      "flags": 0,
+      "tenant": 1,
+      "seq": 0,
+      "shard": 65535,
+      "random_hex": "ffffffffffffffff",
+      "id": "shipment_00jc1gmqww0000801zzzzzzzzzzzzzzz-a0f4"
+    },
+    {
+      "desc": "privacy flag set, tenant=0, shard=0, seq=123",
+      "prefix": "event",
+      "time_ms": 1735689666000,
+      "flags": 32,
+      "tenant": 0,
+      "seq": 123,
+      "shard": 0,
+      "random_hex": "abcdefabcdefabcd",
+      "id": "event_00jc1gwnt0g00007p000qkffnf6yzayd"
+    },
+    {
+      "desc": "invalid: bad checksum",
+      "prefix": "order",
+      "time_ms": 1735689600000,
+      "flags": 0,
+      "tenant": 0,
+      "seq": 0,
+      "shard": 0,
+      "random_hex": "0123456789abcdef",
+      "id": "order_00jc1gmm00000000000028t5cy4tqkff-xxxx",
+      "expect_error": true
+    }
+  ]
+}
