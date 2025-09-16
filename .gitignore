@@ -1,0 +1,44 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Build output
+*.test
+*.out
+*.log
+
+# Go build artifacts
+bin/
+dist/
+*.prof
+*.pprof
+*.cover
+*.cov
+*.race
+
+# Go module / sum backup (generated, not checked in)
+go.work.sum
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.iml
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage.txt
+coverage.html
+
+# Vendor
+vendor/
+
+# Generated tools
+cmd/goldenize/goldenize
+tools/conformance/conformance
+cmd/orderlyid/orderlyid
