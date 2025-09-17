@@ -3,7 +3,8 @@
 **OrderlyID** is a typed, time-sortable, globally unique identifier format with optional checksums and built-in fields for tenancy and sharding.
 It is designed for distributed systems, developer ergonomics, and safer use in public APIs.
 
-> Status: **Draft v0.1** (spec + reference library: Go)
+> Status: Draft v0.1 — stable enough for experimentation.
+> Spec + reference implementation in Go. Feedback and contributions welcome.
 
 ---
 
@@ -52,6 +53,11 @@ If you currently use `AUTO_INCREMENT` or UUIDv4, OrderlyID improves **safety, sc
 - **Fixtures & tests**: readable seed data (`user_*`, `order_*`)
 - **Operational safety**: checksum catches copy/paste/transcription errors
 
+```
+UUIDv4: 550e8400-e29b-41d4-a716-446655440000
+OrderlyID: order_00myngy59c0003000dfk59mg3e36j3rr-9xgg
+```
+
 ---
 
 ## Format
@@ -64,6 +70,14 @@ If you currently use `AUTO_INCREMENT` or UUIDv4, OrderlyID improves **safety, sc
 - `_`: required separator
 - `payload`: Base32 (Crockford) of a **160-bit** body (exactly 32 chars)
 - `checksum`: optional 4 chars (Bech32-style polymod over `<prefix>_<payload>`)
+
+```
+Example:
+order_00myngy59c0003000dfk59mg3e36j3rr-9xgg
+      |                                   |
+      +-- prefix ("order")                +-- checksum (optional)
+            |--- payload (32 Base32 chars; encodes 160-bit body)
+```
 
 ### Binary layout (160 bits total)
 ```
@@ -99,8 +113,19 @@ id := orderlyid.New("order",
 
 ### CLI
 ```sh
-go run ./cmd/orderlyid -prefix order -tenant 12 -n 3
-go run ./cmd/orderlyid -parse order_00myngy59c0003000dfk59mg3e36j3rr-9xgg
+$ go run ./cmd/orderlyid -prefix order -tenant 12 -n 1
+order_00mzmwep4w00030000006tcw2f0g2a5n  2025-09-17T18:03:43.527Z  tenant=12    shard=0     seq=0
+
+$ go run ./cmd/orderlyid -parse order_00mzmwep4w00030000006tcw2f0g2a5n
+ID:         order_00mzmwep4w00030000006tcw2f0g2a5n
+prefix:     order
+time (ms):  1758132223527
+time (iso): 2025-09-17T18:03:43.527Z
+flags:      0x00
+tenant:     12
+seq:        0
+shard:      0
+random60:   0x03699c13c10128b5
 ```
 
 ---
@@ -120,13 +145,13 @@ GSI: `GSI1PK = PUBLICID#{orderlyid}`, `GSI1SK = CONST`
 
 ---
 
-## Migration tips
+## Migration strategy
 - Dual-write a `public_id` column (keep your existing PK)
 - Accept both old and new IDs at read edges
 - Prefer new IDs in logs/metrics immediately
 - Backfill in batches; flip API docs once ready
 
-## Spec
+## Specification
 - `spec/0001-spec.md` — normative spec
 - `spec/test-vectors.json` — conformance vectors
 - `spec/README.md` — overview and guidance
@@ -149,9 +174,17 @@ We thank the authors of UUID, ULID, UUIDv7, and TypeID for the foundational idea
 
 ---
 
+## Roadmap
+
+- Reference implementation: Go (production-ready, conformance-tested).
+- Planned bindings: Rust and Python (contributors welcome).
+- Once the spec stabilizes, we aim to add official libraries for more languages and databases.
+
+---
+
 ## Contributing
 - See `spec/0001-spec.md` and `spec/test-vectors.json`
-- All implementations must pass the conformance tool before merge
+- All implementations must pass the conformance tool before merge. We welcome feedback on the spec, new language bindings, and real-world use cases.
 
 ---
 

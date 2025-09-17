@@ -3,7 +3,8 @@
 This folder contains the **OrderlyID** specification and conformance assets.
 Use this README as the entry point. The normative technical definition lives in **[`0001-spec.md`](./0001-spec.md)**; this README provides context, guidance, and links.
 
-> Status: **Draft v0.1** (subject to change). Reference implementation: Go.
+> Status: Draft v0.1 — stable enough for experimentation.
+> Normative spec may evolve. Reference implementation provided in Go.
 
 ---
 
@@ -18,6 +19,14 @@ A typed, time-sortable, globally unique identifier:
 - `prefix` — lowercase type label (e.g., `order`, `user`).
 - `payload` — Base32 (Crockford) encoding of a **160-bit** binary body.
 - `checksum` — optional 4-character integrity check, Bech32-style polymod over `"<prefix>_" + payload`.
+
+```
+Example:
+order_00myngy59c0003000dfk59mg3e36j3rr-9xgg
+prefix: order
+payload: 32 chars = 160 bits (time=…, tenant=…, seq=…, shard=…, random=…)
+checksum: 9xgg
+```
 
 ---
 
