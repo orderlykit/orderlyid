@@ -1,3 +1,3 @@
-module github.com/kpiljoong/orderlyid
+module github.com/orderlykit/orderlyid
 
 go 1.23.1

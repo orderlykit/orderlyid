@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kpiljoong/orderlyid"
+	"github.com/orderlykit/orderlyid"
 )
 
 type vectorsFile struct {

@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	oi "github.com/kpiljoong/orderlyid"
+	oi "github.com/orderlykit/orderlyid"
 )
 
 func main() {

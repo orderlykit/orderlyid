@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	orderlyid "github.com/kpiljoong/orderlyid"
+	orderlyid "github.com/orderlykit/orderlyid"
 )
 
 type specVectors struct {
