@@ -101,7 +101,7 @@ order_00myngy59c0003000dfk59mg3e36j3rr-9xgg
 
 ### Go
 ```go
-import "github.com/kpiljoong/orderlyid"
+import "github.com/orderlykit/orderlyid"
 
 id := orderlyid.New("order",
   orderlyid.WithTenant(12),
