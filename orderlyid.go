@@ -67,6 +67,21 @@ var (
 	prefixRe       = regexp.MustCompile(`^[a-z][a-z0-9]{1,30}$`)
 )
 
+var (
+	// ErrInvalidFormat reports malformed OrderlyID strings.
+	ErrInvalidFormat = errors.New("orderlyid: invalid format")
+	// ErrInvalidPrefix reports prefixes that do not satisfy the public prefix rule.
+	ErrInvalidPrefix = errors.New("orderlyid: invalid prefix")
+	// ErrInvalidChecksum reports checksum length or checksum validation failures.
+	ErrInvalidChecksum = errors.New("orderlyid: invalid checksum")
+	// ErrInvalidPayloadLength reports payloads that are not the required 32 characters.
+	ErrInvalidPayloadLength = errors.New("orderlyid: invalid payload length")
+	// ErrInvalidBase32 reports payloads that are not valid Crockford Base32.
+	ErrInvalidBase32 = errors.New("orderlyid: invalid base32")
+	// ErrInvalidRandomHex reports invalid random hex input passed to NewFromPartsHex.
+	ErrInvalidRandomHex = errors.New("orderlyid: invalid random hex")
+)
+
 func init() {
 	for i := range alphaRev {
 		alphaRev[i] = 0xFF
@@ -183,6 +198,9 @@ type Parsed struct {
 }
 
 // Parse decodes an OrderlyID string and returns its components.
+//
+// Parse may return errors wrapping ErrInvalidFormat, ErrInvalidPrefix,
+// ErrInvalidChecksum, ErrInvalidPayloadLength, or ErrInvalidBase32.
 func Parse(s string) (*Parsed, error) {
 	s = strings.TrimSpace(s)
 	base := s
@@ -190,28 +208,28 @@ func Parse(s string) (*Parsed, error) {
 		base = s[:i]
 		csGiven := s[i+1:]
 		if len(csGiven) != 4 {
-			return nil, errors.New("checksum must be 4 chars")
+			return nil, fmt.Errorf("%w: must be 4 chars", ErrInvalidChecksum)
 		}
 		expected := checksum4Base(base)
 		if !strings.EqualFold(csGiven, expected) {
-			return nil, errors.New("checksum mismatch")
+			return nil, fmt.Errorf("%w: checksum mismatch", ErrInvalidChecksum)
 		}
 	}
 	i := strings.IndexByte(base, '_')
 	if i <= 0 {
-		return nil, errors.New("missing prefix separator")
+		return nil, fmt.Errorf("%w: missing prefix separator", ErrInvalidFormat)
 	}
 	prefix := base[:i]
 	if !prefixRe.MatchString(prefix) {
-		return nil, errors.New("invalid prefix")
+		return nil, fmt.Errorf("%w: must match [a-z][a-z0-9]{1,30}", ErrInvalidPrefix)
 	}
 	payload := base[i+1:]
 	if len(payload) != 32 {
-		return nil, errors.New("payload must be 32 chars")
+		return nil, fmt.Errorf("%w: must be 32 chars", ErrInvalidPayloadLength)
 	}
 	for j := 0; j < 32; j++ {
 		if alphaRev[payload[j]] == 0xFF {
-			return nil, fmt.Errorf("invalid base32 at pos %d", j)
+			return nil, fmt.Errorf("%w: invalid character at pos %d", ErrInvalidBase32, j)
 		}
 	}
 	buf, err := b32decode(payload)
@@ -305,7 +323,7 @@ func b32encode(src []byte) string {
 
 func b32decode(s string) ([]byte, error) {
 	if len(s) != 32 {
-		return nil, errors.New("base32 length must be 32")
+		return nil, fmt.Errorf("%w: must be 32 chars", ErrInvalidPayloadLength)
 	}
 	out := make([]byte, 20)
 	var acc uint32
@@ -314,7 +332,7 @@ func b32decode(s string) ([]byte, error) {
 	for i := 0; i < len(s); i++ {
 		v := alphaRev[s[i]]
 		if v == 0xFF {
-			return nil, fmt.Errorf("invalid base32 at %d", i)
+			return nil, fmt.Errorf("%w: invalid character at pos %d", ErrInvalidBase32, i)
 		}
 		acc = (acc << 5) | uint32(v)
 		bits += 5
@@ -325,7 +343,7 @@ func b32decode(s string) ([]byte, error) {
 		}
 	}
 	if j != 20 || bits != 0 {
-		return nil, errors.New("invalid base32 payload")
+		return nil, fmt.Errorf("%w: invalid payload", ErrInvalidBase32)
 	}
 	return out, nil
 }
