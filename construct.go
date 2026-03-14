@@ -5,16 +5,25 @@ import (
 	"fmt"
 )
 
+// Components describes the public fields packed into an OrderlyID.
 type Components struct {
-	Prefix   string
-	TimeMs   int64
-	Flags    uint8
-	Tenant   uint16
-	Seq      uint16
-	Shard    uint16
+	// Prefix is the type prefix before the underscore separator.
+	Prefix string
+	// TimeMs is the absolute UTC timestamp in Unix milliseconds.
+	TimeMs int64
+	// Flags is the raw flags byte stored in the payload.
+	Flags uint8
+	// Tenant is the embedded 16-bit tenant identifier.
+	Tenant uint16
+	// Seq is the 12-bit sequence number packed into the payload.
+	Seq uint16
+	// Shard is the embedded 16-bit shard identifier.
+	Shard uint16
+	// Random60 is the low 60 bits of random payload data.
 	Random60 uint64
 }
 
+// NewFromParts builds an OrderlyID from explicit component values.
 func NewFromParts(c Components, withChecksum bool) (string, error) {
 	if err := validatePrefix(c.Prefix); err != nil {
 		return "", err
@@ -40,7 +49,8 @@ func NewFromParts(c Components, withChecksum bool) (string, error) {
 	return base, nil
 }
 
-// NewFromPartsHex is a convenience that accepts random as big-endian hex string.
+// NewFromPartsHex builds an OrderlyID from explicit component values and a
+// big-endian random value encoded as hex.
 func NewFromPartsHex(c Components, randomHex string, withChecksum bool) (string, error) {
 	rb, err := hex.DecodeString(randomHex)
 	if err != nil {
