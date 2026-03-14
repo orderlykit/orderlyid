@@ -24,6 +24,8 @@ type Components struct {
 }
 
 // NewFromParts builds an OrderlyID from explicit component values.
+//
+// NewFromParts may return an error wrapping ErrInvalidPrefix.
 func NewFromParts(c Components, withChecksum bool) (string, error) {
 	if err := validatePrefix(c.Prefix); err != nil {
 		return "", err
@@ -51,10 +53,13 @@ func NewFromParts(c Components, withChecksum bool) (string, error) {
 
 // NewFromPartsHex builds an OrderlyID from explicit component values and a
 // big-endian random value encoded as hex.
+//
+// NewFromPartsHex may return an error wrapping ErrInvalidPrefix or
+// ErrInvalidRandomHex.
 func NewFromPartsHex(c Components, randomHex string, withChecksum bool) (string, error) {
 	rb, err := hex.DecodeString(randomHex)
 	if err != nil {
-		return "", fmt.Errorf("random_hex: %w", err)
+		return "", fmt.Errorf("%w: %v", ErrInvalidRandomHex, err)
 	}
 	var u uint64
 	for _, b := range rb {
@@ -67,7 +72,7 @@ func NewFromPartsHex(c Components, randomHex string, withChecksum bool) (string,
 // validatePrefix mirrors your existing prefix regex check.
 func validatePrefix(p string) error {
 	if !prefixRe.MatchString(p) {
-		return fmt.Errorf("invalid prefix %q", p)
+		return fmt.Errorf("%w: %q must match [a-z][a-z0-9]{1,30}", ErrInvalidPrefix, p)
 	}
 	return nil
 }

@@ -1,6 +1,7 @@
 package orderlyid
 
 import (
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -56,5 +57,47 @@ func TestChecksumRoundTrip(t *testing.T) {
 	bad := id[:len(id)-1] + "0"
 	if _, err := Parse(bad); err == nil {
 		t.Fatalf("expected checksum mismatch")
+	} else if !errors.Is(err, ErrInvalidChecksum) {
+		t.Fatalf("expected ErrInvalidChecksum, got %v", err)
+	}
+}
+
+func TestParseErrorsSupportErrorsIs(t *testing.T) {
+	tests := []struct {
+		name string
+		id   string
+		want error
+	}{
+		{name: "format", id: "order", want: ErrInvalidFormat},
+		{name: "prefix", id: "Order_00000000000000000000000000000000", want: ErrInvalidPrefix},
+		{name: "payload length", id: "order_123", want: ErrInvalidPayloadLength},
+		{name: "base32", id: "order_0000000000000000000000000000000!", want: ErrInvalidBase32},
+		{name: "checksum length", id: "order_00000000000000000000000000000000-123", want: ErrInvalidChecksum},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := Parse(tt.id)
+			if err == nil {
+				t.Fatalf("expected error")
+			}
+			if !errors.Is(err, tt.want) {
+				t.Fatalf("expected %v, got %v", tt.want, err)
+			}
+		})
+	}
+}
+
+func TestNewFromPartsErrorsSupportErrorsIs(t *testing.T) {
+	if _, err := NewFromParts(Components{Prefix: "Bad!"}, false); err == nil {
+		t.Fatalf("expected invalid prefix error")
+	} else if !errors.Is(err, ErrInvalidPrefix) {
+		t.Fatalf("expected ErrInvalidPrefix, got %v", err)
+	}
+
+	if _, err := NewFromPartsHex(Components{Prefix: "order"}, "zz", false); err == nil {
+		t.Fatalf("expected invalid random hex error")
+	} else if !errors.Is(err, ErrInvalidRandomHex) {
+		t.Fatalf("expected ErrInvalidRandomHex, got %v", err)
 	}
 }
