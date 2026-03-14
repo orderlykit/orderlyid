@@ -18,20 +18,24 @@ type options struct {
 	bucketSeconds int
 }
 
+// Option configures ID generation in New.
 type Option func(*options)
 
+// WithTenant sets the 16-bit tenant value embedded in generated IDs.
 func WithTenant(t uint16) Option {
 	return func(o *options) {
 		o.tenant = t
 	}
 }
 
+// WithShard sets the 16-bit shard value embedded in generated IDs.
 func WithShard(s uint16) Option {
 	return func(o *options) {
 		o.shard = s
 	}
 }
 
+// WithShardFromBytes hashes b into a deterministic 16-bit shard value.
 func WithShardFromBytes(b []byte) Option {
 	return func(o *options) {
 		var h uint32
@@ -42,12 +46,14 @@ func WithShardFromBytes(b []byte) Option {
 	}
 }
 
+// WithChecksum enables or disables the trailing 4-character checksum.
 func WithChecksum(v bool) Option {
 	return func(o *options) {
 		o.withChecksum = v
 	}
 }
 
+// WithBucketSeconds rounds the embedded timestamp down to sec-second buckets.
 func WithBucketSeconds(sec int) Option {
 	return func(o *options) {
 		o.bucketSeconds = sec
@@ -98,7 +104,11 @@ var (
 	seq12  uint16 // 12-bit
 )
 
-// New generates a new OrderlyID string like "order_0r8h...".
+// New generates a new OrderlyID such as "order_0r8h...".
+//
+// The prefix must match the public ID type naming rules used by Parse. New
+// panics if the prefix is invalid or if cryptographic randomness cannot be
+// read.
 func New(prefix string, opts ...Option) string {
 	if !prefixRe.MatchString(prefix) {
 		panic("invalid prefix")
@@ -154,17 +164,25 @@ func New(prefix string, opts ...Option) string {
 	return id
 }
 
-// Parse decodes an OrderlyID and returns its components.
+// Parsed is the decoded representation of an OrderlyID.
 type Parsed struct {
+	// Prefix is the type prefix before the underscore separator.
 	Prefix string
-	TimeMs int64 // epoch ms (UTC)
-	Flags  byte
+	// TimeMs is the absolute UTC timestamp in Unix milliseconds.
+	TimeMs int64
+	// Flags is the raw flags byte stored in the payload.
+	Flags byte
+	// Tenant is the embedded 16-bit tenant identifier.
 	Tenant uint16
-	Seq    uint16 // 12-bit
-	Shard  uint16
-	Random uint64 // 60-bit
+	// Seq is the 12-bit per-millisecond sequence number.
+	Seq uint16
+	// Shard is the embedded 16-bit shard identifier.
+	Shard uint16
+	// Random is the 60-bit random suffix stored in the payload.
+	Random uint64
 }
 
+// Parse decodes an OrderlyID string and returns its components.
 func Parse(s string) (*Parsed, error) {
 	s = strings.TrimSpace(s)
 	base := s
