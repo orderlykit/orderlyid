@@ -204,15 +204,14 @@ type Parsed struct {
 func Parse(s string) (*Parsed, error) {
 	s = strings.TrimSpace(s)
 	base := s
+	csGiven := ""
+	hasChecksum := false
 	if i := strings.LastIndexByte(s, '-'); i >= 0 {
 		base = s[:i]
-		csGiven := s[i+1:]
+		csGiven = s[i+1:]
+		hasChecksum = true
 		if len(csGiven) != 4 {
 			return nil, fmt.Errorf("%w: must be 4 chars", ErrInvalidChecksum)
-		}
-		expected := checksum4Base(base)
-		if !strings.EqualFold(csGiven, expected) {
-			return nil, fmt.Errorf("%w: checksum mismatch", ErrInvalidChecksum)
 		}
 	}
 	i := strings.IndexByte(base, '_')
@@ -230,6 +229,12 @@ func Parse(s string) (*Parsed, error) {
 	for j := 0; j < 32; j++ {
 		if alphaRev[payload[j]] == 0xFF {
 			return nil, fmt.Errorf("%w: invalid character at pos %d", ErrInvalidBase32, j)
+		}
+	}
+	if hasChecksum {
+		expected := checksum4Base(base)
+		if !strings.EqualFold(csGiven, expected) {
+			return nil, fmt.Errorf("%w: checksum mismatch", ErrInvalidChecksum)
 		}
 	}
 	buf, err := b32decode(payload)

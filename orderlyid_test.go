@@ -88,6 +88,37 @@ func TestParseErrorsSupportErrorsIs(t *testing.T) {
 	}
 }
 
+func TestParseInvalidChecksumBaseDoesNotPanic(t *testing.T) {
+	tests := []struct {
+		name string
+		id   string
+		want error
+	}{
+		{name: "missing payload separator", id: "order-abcd", want: ErrInvalidFormat},
+		{name: "invalid prefix", id: "Order_00000000000000000000000000000000-abcd", want: ErrInvalidPrefix},
+		{name: "short payload", id: "order_123-abcd", want: ErrInvalidPayloadLength},
+		{name: "invalid base32", id: "order_0000000000000000000000000000000!-abcd", want: ErrInvalidBase32},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("Parse panicked: %v", r)
+				}
+			}()
+
+			_, err := Parse(tt.id)
+			if err == nil {
+				t.Fatalf("expected error")
+			}
+			if !errors.Is(err, tt.want) {
+				t.Fatalf("expected %v, got %v", tt.want, err)
+			}
+		})
+	}
+}
+
 func TestNewFromPartsErrorsSupportErrorsIs(t *testing.T) {
 	if _, err := NewFromParts(Components{Prefix: "Bad!"}, false); err == nil {
 		t.Fatalf("expected invalid prefix error")
