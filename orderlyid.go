@@ -80,6 +80,8 @@ var (
 	ErrInvalidBase32 = errors.New("orderlyid: invalid base32")
 	// ErrInvalidRandomHex reports invalid random hex input passed to NewFromPartsHex.
 	ErrInvalidRandomHex = errors.New("orderlyid: invalid random hex")
+	// ErrUnsupportedVersion reports OrderlyIDs with unsupported wire version bits.
+	ErrUnsupportedVersion = errors.New("orderlyid: unsupported wire version")
 )
 
 func init() {
@@ -108,9 +110,9 @@ func init() {
 }
 
 const (
-	versionBits          = 0 // v1
-	privacyBitMask       = 1 << 5
-	epoch2020      int64 = 1577836800000 // 2020-01-01T00:00:00Z in ms
+	supportedWireVersion       = 0 // v1
+	privacyBitMask             = 1 << 5
+	epoch2020            int64 = 1577836800000 // 2020-01-01T00:00:00Z in ms
 )
 
 var (
@@ -200,7 +202,8 @@ type Parsed struct {
 // Parse decodes an OrderlyID string and returns its components.
 //
 // Parse may return errors wrapping ErrInvalidFormat, ErrInvalidPrefix,
-// ErrInvalidChecksum, ErrInvalidPayloadLength, or ErrInvalidBase32.
+// ErrInvalidChecksum, ErrInvalidPayloadLength, ErrInvalidBase32, or
+// ErrUnsupportedVersion.
 func Parse(s string) (*Parsed, error) {
 	s = strings.TrimSpace(s)
 	base := s
@@ -242,6 +245,9 @@ func Parse(s string) (*Parsed, error) {
 		return nil, err
 	}
 	ms, flags, tenant, seq, shard, random60 := unpack(buf)
+	if wireVersion(flags) != supportedWireVersion {
+		return nil, fmt.Errorf("%w: %d", ErrUnsupportedVersion, wireVersion(flags))
+	}
 	return &Parsed{
 		Prefix: prefix,
 		TimeMs: int64(ms) + epoch2020,
@@ -251,6 +257,10 @@ func Parse(s string) (*Parsed, error) {
 		Shard:  shard,
 		Random: random60,
 	}, nil
+}
+
+func wireVersion(flags byte) byte {
+	return flags >> 6
 }
 
 // Packing layout (big-endian)

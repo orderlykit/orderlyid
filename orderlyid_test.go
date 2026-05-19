@@ -119,11 +119,30 @@ func TestParseInvalidChecksumBaseDoesNotPanic(t *testing.T) {
 	}
 }
 
+func TestParseRejectsUnsupportedWireVersion(t *testing.T) {
+	body := pack(0, 0x40, 0, 0, 0, 0)
+	id := "order_" + b32encode(body[:])
+
+	_, err := Parse(id)
+	if err == nil {
+		t.Fatalf("expected unsupported version error")
+	}
+	if !errors.Is(err, ErrUnsupportedVersion) {
+		t.Fatalf("expected ErrUnsupportedVersion, got %v", err)
+	}
+}
+
 func TestNewFromPartsErrorsSupportErrorsIs(t *testing.T) {
 	if _, err := NewFromParts(Components{Prefix: "Bad!"}, false); err == nil {
 		t.Fatalf("expected invalid prefix error")
 	} else if !errors.Is(err, ErrInvalidPrefix) {
 		t.Fatalf("expected ErrInvalidPrefix, got %v", err)
+	}
+
+	if _, err := NewFromParts(Components{Prefix: "order", Flags: 0x40}, false); err == nil {
+		t.Fatalf("expected unsupported version error")
+	} else if !errors.Is(err, ErrUnsupportedVersion) {
+		t.Fatalf("expected ErrUnsupportedVersion, got %v", err)
 	}
 
 	if _, err := NewFromPartsHex(Components{Prefix: "order"}, "zz", false); err == nil {
