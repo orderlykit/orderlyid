@@ -94,7 +94,7 @@ checksum: 9xgg
 
 ## Interop & storage guidance
 
-- **SQL**: store both `id_text VARCHAR(64) UNIQUE` and `id_bin BINARY(20)`; index `id_bin` for range scans.
+- **SQL**: store the text form as `id_text VARCHAR(69) UNIQUE`; use `VARCHAR(64)` only if checksum suffixes are never stored. Store the 20-byte binary body as `id_bin BINARY(20)` on MySQL/Aurora or `id_bin BYTEA` on PostgreSQL; index `id_bin` for range scans.
 - **DynamoDB**: use ID as sort key; to avoid hot partitions, hash into virtual shards.
 - **APIs & logs**: prefer the typed public ID; redact tail chars if sensitive.
 

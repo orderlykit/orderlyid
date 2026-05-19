@@ -138,8 +138,10 @@ random60:   0x03699c13c10128b5
 **Global lookup by public ID**
 GSI: `GSI1PK = PUBLICID#{orderlyid}`, `GSI1SK = CONST`
 
-**Postgres / MySQL**
-- Store both `id_text VARCHAR(64) UNIQUE` and `id_bin BINARY(20)`
+**SQL storage**
+- Store the text form as `id_text VARCHAR(69) UNIQUE`
+- Use `VARCHAR(64)` only if checksum suffixes are never stored
+- Store the 20-byte binary body as `id_bin BINARY(20)` on MySQL/Aurora or `id_bin BYTEA` on PostgreSQL
 - Index `id_bin` for range scans
 - Use `id_text` for APIs/logs
 
