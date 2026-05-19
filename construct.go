@@ -25,10 +25,14 @@ type Components struct {
 
 // NewFromParts builds an OrderlyID from explicit component values.
 //
-// NewFromParts may return an error wrapping ErrInvalidPrefix.
+// NewFromParts may return an error wrapping ErrInvalidPrefix or
+// ErrUnsupportedVersion.
 func NewFromParts(c Components, withChecksum bool) (string, error) {
 	if err := validatePrefix(c.Prefix); err != nil {
 		return "", err
+	}
+	if wireVersion(c.Flags) != supportedWireVersion {
+		return "", fmt.Errorf("%w: %d", ErrUnsupportedVersion, wireVersion(c.Flags))
 	}
 	// Convert absolute time to ms since 2020-01-01 UTC (epoch2020).
 	var msSince2020 uint64
@@ -54,8 +58,8 @@ func NewFromParts(c Components, withChecksum bool) (string, error) {
 // NewFromPartsHex builds an OrderlyID from explicit component values and a
 // big-endian random value encoded as hex.
 //
-// NewFromPartsHex may return an error wrapping ErrInvalidPrefix or
-// ErrInvalidRandomHex.
+// NewFromPartsHex may return an error wrapping ErrInvalidPrefix,
+// ErrInvalidRandomHex, or ErrUnsupportedVersion.
 func NewFromPartsHex(c Components, randomHex string, withChecksum bool) (string, error) {
 	rb, err := hex.DecodeString(randomHex)
 	if err != nil {
