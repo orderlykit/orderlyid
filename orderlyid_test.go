@@ -54,7 +54,11 @@ func TestChecksumRoundTrip(t *testing.T) {
 		t.Fatalf("parse with checksum failed: %v", err)
 	}
 	// Tamper last char
-	bad := id[:len(id)-1] + "0"
+	repl := byte('0')
+	if id[len(id)-1] == repl {
+		repl = '1'
+	}
+	bad := id[:len(id)-1] + string(repl)
 	if _, err := Parse(bad); err == nil {
 		t.Fatalf("expected checksum mismatch")
 	} else if !errors.Is(err, ErrInvalidChecksum) {
